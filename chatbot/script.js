@@ -7,7 +7,10 @@ const fileCancelButton = document.querySelector("#file-cancel");
 
 
 
-const API_KEY = "AIzaSyCXGbZtJGwIDQmkgpp6mAZEO-H00VQwfjU";
+// WARNING: Never hardcode your API key in a frontend file. 
+// It has been moved to the secure backend .env file.
+const API_KEY = ""; 
+
 
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
 
