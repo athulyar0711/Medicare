@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MEDICARE - Doctor Dashboard">
+    <title>MEDICARE – Doctor Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div id="navbar"></div>
+
+    <div class="page-container">
+        <!-- Welcome -->
+        <div class="welcome-section">
+            <h1>Welcome, <span id="userName">Doctor</span> 🩺</h1>
+            <p style="color:var(--text-secondary)">Manage your patients and appointments</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid-3" style="margin-bottom:2rem" id="statsSection">
+            <div class="stat-card">
+                <div class="card-icon blue">📅</div>
+                <div class="stat-info">
+                    <h3 id="todayCount">0</h3>
+                    <p>Today's Appointments</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="card-icon purple">📊</div>
+                <div class="stat-info">
+                    <h3 id="totalCount">0</h3>
+                    <p>Total Appointments</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="card-icon green">📆</div>
+                <div class="stat-info">
+                    <h3 id="upcomingCount">0</h3>
+                    <p>Upcoming</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('patients')">👥 Patients</button>
+            <button class="tab-btn" onclick="switchTab('appointments')">📅 Appointments</button>
+            <button class="tab-btn" onclick="switchTab('schedule')">🏥 My Schedule</button>
+        </div>
+
+        <!-- Patients Tab -->
+        <div class="tab-content active" id="patientsTab">
+            <div class="search-bar">
+                <input type="text" id="patientName" class="form-control" placeholder="Search by name...">
+                <input type="text" id="patientEmail" class="form-control" placeholder="Search by email...">
+                <button class="btn btn-primary" onclick="searchPatients()">Search</button>
+            </div>
+            <div id="patientsList">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- Appointments Tab -->
+        <div class="tab-content" id="appointmentsTab">
+            <div class="section" style="margin-bottom:1.5rem">
+                <h3 style="margin-bottom:1rem">📅 Today's Appointments</h3>
+                <div id="todayAppointments">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            <div class="section">
+                <h3 style="margin-bottom:1rem">📆 Upcoming Appointments</h3>
+                <div id="upcomingAppointments">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Tab -->
+        <div class="tab-content" id="scheduleTab">
+            <div class="grid-2">
+                <!-- Add Schedule Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>➕ Add New Schedule</h3>
+                    </div>
+                    <form id="scheduleForm">
+                        <div class="form-group">
+                            <label>Select Hospital</label>
+                            <select id="hospitalSelect" class="form-control" onchange="toggleNewHospitalFields()"
+                                required>
+                                <option value="">Loading hospitals...</option>
+                            </select>
+                        </div>
+
+                        <div id="newHospitalFields"
+                            style="display:none; padding-left:1rem; border-left:2px solid var(--border-color); margin-bottom:1rem;">
+                            <div class="form-group">
+                                <label>Hospital Name *</label>
+                                <input type="text" id="newHospName" class="form-control" placeholder="e.g. City Care">
+                            </div>
+                            <div class="form-group">
+                                <label>Address *</label>
+                                <input type="text" id="newHospAddress" class="form-control" placeholder="Full address">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="text" id="newHospPhone" class="form-control" placeholder="Contact number">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Day of Week</label>
+                            <select id="scheduleDay" class="form-control" required>
+                                <option value="Monday">Monday</option>
+                                <option value="Tuesday">Tuesday</option>
+                                <option value="Wednesday">Wednesday</option>
+                                <option value="Thursday">Thursday</option>
+                                <option value="Friday">Friday</option>
+                                <option value="Saturday">Saturday</option>
+                                <option value="Sunday">Sunday</option>
+                            </select>
+                        </div>
+
+                        <div class="grid-2" style="gap:1rem">
+                            <div class="form-group">
+                                <label>Start Time</label>
+                                <input type="time" id="startTime" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>End Time</label>
+                                <input type="time" id="endTime" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">Add Schedule</button>
+                    </form>
+                </div>
+
+                <!-- Current Schedules -->
+                <div>
+                    <h2 style="margin-bottom:1rem">🏥 My Current Schedule</h2>
+                    <div id="scheduleList">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Files Modal -->
+    <div id="filesModal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5);">
+        <div class="modal-content" style="background-color:var(--bg-card); margin:10% auto; padding:20px; border:1px solid var(--border-glass); border-radius:12px; width:80%; max-width:600px; box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 id="modalPatientName">Patient Files</h3>
+                <button onclick="closeFilesModal()" class="btn btn-danger btn-sm" style="border-radius:50%; width:30px; height:30px; padding:0; line-height:30px; text-align:center;">&times;</button>
+            </div>
+            <div id="modalFilesList" style="max-height: 400px; overflow-y: auto;">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        if (!requireAuth(['doctor_user'])) throw new Error('Unauthorized');
+        document.getElementById('navbar').innerHTML = renderNavbar('dashboard');
+        document.getElementById('userName').textContent = getUserName();
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            if (tab === 'patients') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('patientsTab').classList.add('active');
+            } else if (tab === 'appointments') {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('appointmentsTab').classList.add('active');
+            } else if (tab === 'schedule') {
+                document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+                document.getElementById('scheduleTab').classList.add('active');
+            }
+        }
+
+        // Load appointments
+        async function loadAppointments() {
+            try {
+                const data = await apiFetch('/doctor/appointments');
+                document.getElementById('todayCount').textContent = data.todayCount;
+                document.getElementById('totalCount').textContent = data.totalCount;
+                document.getElementById('upcomingCount').textContent = data.upcoming?.length || 0;
+
+                // Today's appointments
+                const todayContainer = document.getElementById('todayAppointments');
+                if (data.today && data.today.length > 0) {
+                    todayContainer.innerHTML = data.today.map(appt => renderAppointmentCard(appt)).join('');
+                } else {
+                    todayContainer.innerHTML = `
+                        <div class="empty-state" style="padding:1.5rem">
+                            <div class="empty-icon">📅</div>
+                            <h3>No appointments today</h3>
+                            <p>Enjoy your free day!</p>
+                        </div>
+                    `;
+                }
+
+                // Upcoming
+                const upcomingContainer = document.getElementById('upcomingAppointments');
+                if (data.upcoming && data.upcoming.length > 0) {
+                    upcomingContainer.innerHTML = data.upcoming.map(appt => renderAppointmentCard(appt)).join('');
+                } else {
+                    upcomingContainer.innerHTML = '<p class="empty-state" style="padding:1rem">No upcoming appointments</p>';
+                }
+            } catch (err) {
+                document.getElementById('todayAppointments').innerHTML = '<p class="empty-state">Failed to load</p>';
+            }
+        }
+
+        function renderAppointmentCard(appt) {
+            const date = new Date(appt.appointment_datetime);
+            return `
+                <div class="appointment-card" style="margin-bottom:0.75rem">
+                    <div class="appt-date">
+                        <div class="day">${date.getDate()}</div>
+                        <div class="month">${date.toLocaleString('en', { month: 'short' })}</div>
+                    </div>
+                    <div class="appt-info" style="flex:1">
+                        <h4>${appt.patient_name}</h4>
+                        <p>📧 ${appt.patient_email}</p>
+                        <p>📍 ${appt.hospital_name} • ⏰ ${date.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                    <span class="badge badge-${appt.status === 'completed' ? 'success' : appt.status === 'cancelled' ? 'danger' : 'info'}">${appt.status}</span>
+                </div>
+            `;
+        }
+
+        // Search patients
+        async function searchPatients() {
+            const params = new URLSearchParams();
+            const name = document.getElementById('patientName').value;
+            const email = document.getElementById('patientEmail').value;
+            if (name) params.set('name', name);
+            if (email) params.set('email', email);
+
+            document.getElementById('patientsList').innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const patients = await apiFetch(`/doctor/patients?${params.toString()}`);
+                const container = document.getElementById('patientsList');
+
+                if (!patients || patients.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">👥</div>
+                            <h3>No patients found</h3>
+                            <p>Try adjusting your search</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = `<div class="grid-3">${patients.map(p => `
+                    <div class="patient-card" style="display:flex; flex-direction:column; justify-content:space-between; gap:1rem;">
+                        <div>
+                            <h4>${p.name}</h4>
+                            <p>📧 ${p.email}</p>
+                            ${p.phone ? `<p>📞 ${p.phone}</p>` : ''}
+                            ${p.address ? `<p>📍 ${p.address}</p>` : ''}
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="viewPatientFiles(${p.patient_id}, '${p.name.replace(/'/g, "\\'")}')">View Files</button>
+                    </div>
+                `).join('')}</div>`;
+            } catch (err) {
+                document.getElementById('patientsList').innerHTML = '<p class="empty-state">Failed to load</p>';
+            }
+        }
+
+        // --- File Viewing ---
+        function closeFilesModal() {
+            document.getElementById('filesModal').style.display = 'none';
+        }
+
+        async function viewPatientFiles(patientId, patientName) {
+            document.getElementById('modalPatientName').textContent = `Files for ${patientName}`;
+            const container = document.getElementById('modalFilesList');
+            container.innerHTML = '<div class="spinner"></div>';
+            document.getElementById('filesModal').style.display = 'block';
+
+            try {
+                const files = await apiFetch(`/files/patient/${patientId}`);
+                if (!files || files.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="padding:2rem;">
+                            <div class="empty-icon">📁</div>
+                            <p>No files uploaded by this patient.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = files.map(file => {
+                    const date = new Date(file.uploadedAt).toLocaleString('en-US', {
+                        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+                    return `
+                        <div style="padding:1rem; border:1px solid var(--border-color); border-radius:8px; margin-bottom:1rem; background:var(--bg-glass);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                                <strong style="color:var(--text-primary); word-break:break-all;">${file.filename}</strong>
+                                <span style="font-size:0.85rem; color:var(--text-muted);">${date}</span>
+                            </div>
+                            <div style="text-align:center; padding:0.5rem; background:rgba(0,0,0,0.1); border-radius:4px; cursor:pointer;" onclick="downloadOrViewFile('${file._id}')">
+                                <span class="badge badge-info" style="cursor:pointer;">Click to Download / View Image (${file.mimeType.split('/')[1].toUpperCase()})</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                container.innerHTML = '<p class="empty-state" style="color:var(--danger)">Failed to load patient files.</p>';
+            }
+        }
+
+        async function downloadOrViewFile(fileId) {
+            try {
+                showToast('Fetching file...', 'info');
+                const fileData = await apiFetch(`/files/${fileId}`);
+                if (!fileData || !fileData.data) throw new Error('No data found');
+
+                // Create a temporary link element to trigger the download or open in new tab
+                const link = document.createElement('a');
+                link.href = `data:${fileData.mimeType};base64,${fileData.data}`;
+                link.download = fileData.filename || 'download';
+                
+                // if it's an image, we can try to pop it in a new window instead of forcing download
+                if (fileData.mimeType.startsWith('image/')) {
+                    const w = window.open("");
+                    w.document.write(`<img src="data:${fileData.mimeType};base64,${fileData.data}" style="max-width:100%; height:auto;" />`);
+                } else {
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Failed to retrieve file', 'error');
+            }
+        }
+
+        // --- Schedule Management ---
+
+        function toggleNewHospitalFields() {
+            const select = document.getElementById('hospitalSelect');
+            const fields = document.getElementById('newHospitalFields');
+            const isNew = select.value === 'new';
+            fields.style.display = isNew ? 'block' : 'none';
+            document.getElementById('newHospName').required = isNew;
+            document.getElementById('newHospAddress').required = isNew;
+        }
+
+        async function loadHospitals() {
+            try {
+                const hospitals = await apiFetch('/doctor/hospitals');
+                const select = document.getElementById('hospitalSelect');
+                select.innerHTML = '<option value="">Select a hospital</option>';
+                hospitals.forEach(h => {
+                    select.innerHTML += `<option value="${h.id}">${h.name} (${h.address})</option>`;
+                });
+                select.innerHTML += '<option value="new">+ Add New Hospital...</option>';
+            } catch (err) {
+                console.error('Failed to load hospitals', err);
+            }
+        }
+
+        async function loadSchedules() {
+            try {
+                const profile = await apiFetch('/doctor/profile');
+                const container = document.getElementById('scheduleList');
+
+                if (!profile.schedules || profile.schedules.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No schedule found. Add one above.</div>';
+                    return;
+                }
+
+                // Group by hospital name for better visual display
+                const grouped = {};
+                profile.schedules.forEach(s => {
+                    if (!grouped[s.hospital_name]) grouped[s.hospital_name] = [];
+                    grouped[s.hospital_name].push(s);
+                });
+
+                let html = '';
+                for (const [hospital, schedules] of Object.entries(grouped)) {
+                    html += `<div style="margin-bottom:1rem; border:1px solid var(--border-color); padding:1rem; border-radius:0.5rem">
+                                <h4 style="color:var(--accent-primary); margin-bottom:0.5rem">${hospital}</h4>`;
+                    schedules.forEach(s => {
+                        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border-glass)">
+                                    <span style="font-weight:600; width:100px">${s.day_of_week}</span>
+                                    <span>${s.start_time.substring(0, 5)} - ${s.end_time.substring(0, 5)}</span>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteSchedule(${s.id})">Delete</button>
+                                 </div>`;
+                    });
+                    html += `</div>`;
+                }
+                container.innerHTML = html;
+            } catch (err) {
+                document.getElementById('scheduleList').innerHTML = '<div class="empty-state">Failed to load schedules.</div>';
+            }
+        }
+
+        document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+
+            try {
+                let hospitalId = document.getElementById('hospitalSelect').value;
+
+                // If creating new hospital
+                if (hospitalId === 'new') {
+                    const newHosp = await apiFetch('/doctor/hospitals', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            name: document.getElementById('newHospName').value,
+                            address: document.getElementById('newHospAddress').value,
+                            phone: document.getElementById('newHospPhone').value
+                        })
+                    });
+                    hospitalId = newHosp.id;
+                    await loadHospitals(); // Refresh dropdown
+                }
+
+                if (!hospitalId) throw new Error('Hospital ID is required');
+
+                // Add Schedule Entry
+                await apiFetch('/doctor/schedule', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        hospital_id: hospitalId,
+                        day_of_week: document.getElementById('scheduleDay').value,
+                        start_time: document.getElementById('startTime').value,
+                        end_time: document.getElementById('endTime').value
+                    })
+                });
+
+                showToast('Schedule added successfully!', 'success');
+                e.target.reset();
+                toggleNewHospitalFields();
+                loadSchedules();
+
+            } catch (err) {
+                // apiFetch handles its own toast, but make sure form resets
+                console.error(err);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        async function deleteSchedule(id) {
+            if (!confirm('Are you sure you want to remove this schedule entry?')) return;
+            try {
+                await apiFetch(`/doctor/schedule/${id}`, { method: 'DELETE' });
+                showToast('Schedule removed', 'info');
+                loadSchedules();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        loadAppointments();
+        searchPatients();
+        loadHospitals();
+        loadSchedules();
+    </script>
+</body>
+
+</html>

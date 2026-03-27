@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.test
+*.log
+*.txt
+*.png
+*.json
+!package.json
+!package-lock.json
+!manifest.json
+documents/
+test-results/
+playwright-report/
+.DS_Store

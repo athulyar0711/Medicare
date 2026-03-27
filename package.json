@@ -1,0 +1,39 @@
+{
+  "name": "medicare",
+  "version": "1.0.0",
+  "description": "MEDICARE - Hospital Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "db:test": "cmd /c \"mysql -u root -p2411 < database\\schema_test.sql\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "hospital",
+    "management",
+    "healthcare"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^1.44.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^9.2.4",
+    "mysql2": "^3.9.1",
+    "nodemon": "^3.1.14",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@rolldown/binding-win32-x64-msvc": "^1.0.0-rc.11",
+    "nock": "^14.0.11",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.0"
+  }
+}

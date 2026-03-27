@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Medicare - Sign In</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-branding">
+            <div class="logo">
+                <i class="fas fa-heartbeat brand-icon"></i>
+                <h1>Medicare</h1>
+                <p>Your Complete Digital Healthcare Companion</p>
+                <div class="features-list">
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i> Health Tracking
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i> Doctor Booking
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i> AI Reports
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-forms">
+            <div class="form-tabs">
+                <button class="tab-btn active" onclick="showLogin()">Sign In</button>
+                <button class="tab-btn" onclick="showSignup()">Sign Up</button>
+            </div>
+
+            <form id="loginForm" class="auth-form active" onsubmit="loginUser(event)">
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" required />
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required />
+                </div>
+                <button type="submit" class="btn-primary full-width">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
+
+            <form id="signupForm" class="auth-form" onsubmit="signupUser(event)">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Full Name</label>
+                    <input type="text" id="userName" placeholder="Enter your full name" required />
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="userEmail" placeholder="Enter your email" required />
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-user-tag"></i> User Type</label>
+                    <select id="userRole" required>
+                        <option value="">Select type</option>
+                        <option value="patient">👤 Patient</option>
+                        <option value="doctor">👨⚕️ Doctor</option>
+                        <option value="admin">👨💼 Admin</option>
+                    </select>
+                </div>
+                <div class="form-group" id="doctorSpecializationGroup" style="display: none">
+                    <label><i class="fas fa-stethoscope"></i> Specialization</label>
+                    <select id="doctorSpecialization">
+                        <option value="">Select specialization</option>
+                        <option value="Cardiologist">Cardiologist</option>
+                        <option value="Dermatologist">Dermatologist</option>
+                        <option value="Neurologist">Neurologist</option>
+                        <option value="Pediatrician">Pediatrician</option>
+                        <option value="Orthopedic">Orthopedic</option>
+                        <option value="General Physician">General Physician</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-lock"></i> Password</label>
+                        <input type="password" id="userPassword" placeholder="Create password (6+ chars)" required />
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-lock-open"></i> Confirm Password</label>
+                        <input type="password" id="userConfirmPassword" placeholder="Confirm password" required />
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary full-width" id="createAccountBtn">
+                    <i class="fas fa-user-plus"></i> Create Account & Go to Dashboard
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <button type="button" class="btn-google" id="googleSignInBtn" onclick="handleGoogleSignIn()">
+                    <i class="fab fa-google"></i> Continue with Google
+                </button>
+                <p style="margin-top: 1.5rem">
+                    By signing up, you agree to our <a href="#">Terms</a> and
+                    <a href="#">Privacy Policy</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_USERS = [
+            {
+                name: "Athulya Ratheesh",
+                email: "athulyaratheesh01@gmail.com",
+                role: "patient",
+                picture:
+                    "https://ui-avatars.com/api/?name=Athulya&background=059669&color=fff",
+            },
+            {
+                name: "Dr. Sarah Johnson",
+                email: "sarah.johnson@gmail.com",
+                role: "doctor",
+                picture:
+                    "https://ui-avatars.com/api/?name=Sarah&background=059669&color=fff",
+            },
+            {
+                name: "Admin Manager",
+                email: "admin.medicare@gmail.com",
+                role: "admin",
+                picture:
+                    "https://ui-avatars.com/api/?name=Admin&background=059669&color=fff",
+            },
+            {
+                name: "Dr. Rajesh Kumar",
+                email: "rajesh.kumar@gmail.com",
+                role: "doctor",
+                picture:
+                    "https://ui-avatars.com/api/?name=Rajesh&background=059669&color=fff",
+            },
+            {
+                name: "Priya Sharma",
+                email: "priya.sharma@gmail.com",
+                role: "patient",
+                picture:
+                    "https://ui-avatars.com/api/?name=Priya&background=059669&color=fff",
+            },
+        ];
+
+        function handleGoogleSignIn() {
+            const btn = document.getElementById("googleSignInBtn");
+            const originalText = btn.innerHTML;
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                let user =
+                    GOOGLE_USERS.find(
+                        (u) => u.email === "athulyaratheesh01@gmail.com",
+                    ) || GOOGLE_USERS[Math.floor(Math.random() * GOOGLE_USERS.length)];
+                saveUserAndRedirect(user.name, user.role, user.email, user.picture);
+            }, 1500);
+        }
+
+        function showLogin() {
+            document.getElementById("loginForm").classList.add("active");
+            document.getElementById("signupForm").classList.remove("active");
+            document.querySelectorAll(".tab-btn")[0].classList.add("active");
+            document.querySelectorAll(".tab-btn")[1].classList.remove("active");
+        }
+
+        function showSignup() {
+            document.getElementById("loginForm").classList.remove("active");
+            document.getElementById("signupForm").classList.add("active");
+            document.querySelectorAll(".tab-btn")[0].classList.remove("active");
+            document.querySelectorAll(".tab-btn")[1].classList.add("active");
+        }
+
+        function loginUser(event) {
+            event.preventDefault();
+            const email = document
+                .getElementById("loginEmail")
+                .value.toLowerCase()
+                .trim();
+
+            const users = JSON.parse(
+                localStorage.getItem("medicare_users") || "[]",
+            );
+            const user = users.find((u) => u.email === email);
+
+            if (user) {
+                saveUserAndRedirect(
+                    user.name,
+                    user.role,
+                    user.email,
+                    user.picture || getAvatarUrl(user.name),
+                );
+                showNotification("Welcome back " + user.name + "!", "success");
+            } else {
+                showNotification("User not found! Please sign up first.", "error");
+            }
+        }
+
+        function signupUser(event) {
+            event.preventDefault();
+
+            const name = document.getElementById("userName").value.trim();
+            const email = document
+                .getElementById("userEmail")
+                .value.toLowerCase()
+                .trim();
+            const role = document.getElementById("userRole").value;
+            const password = document.getElementById("userPassword").value;
+            const confirmPassword = document.getElementById(
+                "userConfirmPassword",
+            ).value;
+
+            if (
+                !name ||
+                !email ||
+                !role ||
+                password.length < 6 ||
+                password !== confirmPassword
+            ) {
+                showNotification(
+                    "All fields required, password 6+ chars, passwords match!",
+                    "error",
+                );
+                return;
+            }
+
+            const users = JSON.parse(
+                localStorage.getItem("medicare_users") || "[]",
+            );
+            if (users.find((u) => u.email === email)) {
+                showNotification("User already exists! Please sign in.", "error");
+                return;
+            }
+
+            const picture = getAvatarUrl(name);
+            saveUserAndRedirect(name, role, email, picture);
+        }
+
+        function saveUserAndRedirect(name, role, email, picture) {
+            const btn =
+                document.getElementById("createAccountBtn") ||
+                document.getElementById("googleSignInBtn");
+
+            btn.innerHTML = 'Redirecting... <i class="fas fa-arrow-right"></i>';
+            btn.style.background = "#10b981";
+
+            const users = JSON.parse(
+                localStorage.getItem("medicare_users") || "[]",
+            );
+            const existingUserIndex = users.findIndex((u) => u.email === email);
+
+            const userData = {
+                name: name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(),
+                email: email,
+                role: role,
+                picture: picture,
+                weight: role === "patient" ? 0 : null,
+                height: role === "patient" ? 0 : null,
+                bloodSugar: role === "patient" ? 0 : null,
+                bloodPressure: role === "patient" ? "0/0" : null,
+                bmi: role === "patient" ? 0 : null,
+                created: new Date().toLocaleString(),
+                // Doctor-specific fields
+                specialization: role === "doctor" ? "" : null,
+                hospitals: role === "doctor" ? [] : null,
+                timings: role === "doctor" ? {} : null,
+                appointments: role === "doctor" ? [] : null,
+            };
+
+            if (existingUserIndex === -1) {
+                users.push(userData);
+            } else {
+                users[existingUserIndex] = {
+                    ...users[existingUserIndex],
+                    ...userData,
+                };
+            }
+
+            localStorage.setItem("medicare_users", JSON.stringify(users));
+
+            localStorage.setItem(
+                "medicare_current_user",
+                JSON.stringify({
+                    name: userData.name,
+                    email: email,
+                    role: role,
+                    picture: picture,
+                }),
+            );
+
+            // Role-based dashboard redirection
+            setTimeout(() => {
+                const dashboardUrl =
+                    role === "doctor"
+                        ? "doctor_dashboard.html"
+                        : role === "admin"
+                            ? "admin_dashboard.html"
+                            : "dashboard.html";
+                window.location.href = dashboardUrl;
+            }, 1200);
+        }
+
+        function getAvatarUrl(name) {
+            return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=059669&color=fff&size=40`;
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement("div");
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `<i class="fas fa-${type === "success" ? "check-circle" : "exclamation-triangle"}"></i> ${message}`;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = "slideInRight 0.5s reverse";
+                setTimeout(() => notification.remove(), 500);
+            }, 4000);
+        }
+        // Show specialization only if doctor selected
+        document
+            .getElementById("userRole")
+            .addEventListener("change", function () {
+                const specGroup = document.getElementById(
+                    "doctorSpecializationGroup",
+                );
+                if (this.value === "doctor") {
+                    specGroup.style.display = "block";
+                } else {
+                    specGroup.style.display = "none";
+                }
+            });
+    </script>
+</body>
+
+</html>

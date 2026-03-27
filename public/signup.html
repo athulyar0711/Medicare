@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MEDICARE - Create your account">
+    <title>MEDICARE – Sign Up</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="brand">
+                <span class="brand-icon"><i class="fas fa-heartbeat"></i></span>
+                <h1>MEDICARE</h1>
+                <p>Create your account</p>
+            </div>
+
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" class="form-control" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="Min 6 characters" required
+                        minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="role">Register As</label>
+                    <select id="role" class="form-control" required>
+                        <option value="patient">Patient</option>
+                        <option value="doctor_user">Doctor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+
+                <!-- Conditional fields -->
+                <div id="patientFields">
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" class="form-control" placeholder="Your phone number">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <textarea id="address" class="form-control" placeholder="Your address" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div id="doctorFields" style="display:none;">
+                    <div class="form-group">
+                        <label for="specialization">Specialization</label>
+                        <input type="text" id="specialization" class="form-control" placeholder="e.g., Cardiology">
+                    </div>
+                    <div class="form-group">
+                        <label for="doctorPhone">Phone Number</label>
+                        <input type="tel" id="doctorPhone" class="form-control" placeholder="Your phone number">
+                    </div>
+                    <div class="form-group">
+                        <label>Hospital Schedules</label>
+                        <div id="scheduleContainer" class="schedule-container"
+                            style="background:var(--bg-glass); border:1px solid var(--border-glass); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem;">
+                            <!-- Dynamic schedule rows will go here -->
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addScheduleRow()">+ Add Hospital
+                            Schedule</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="signupBtn">Create Account</button>
+            </form>
+
+            <div class="auth-footer">
+                Already have an account? <a href="/index.html">Sign In</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        const user = getUser();
+        if (user) redirectByRole(user.role);
+
+        const roleSelect = document.getElementById('role');
+        const patientFields = document.getElementById('patientFields');
+        const doctorFields = document.getElementById('doctorFields');
+        let availableHospitals = [];
+
+        // Fetch hospitals on load
+        async function loadHospitalsForSignup() {
+            try {
+                // Using standard fetch since user isn't logged in yet
+                const res = await fetch('/api/auth/hospitals');
+                if (res.ok) {
+                    availableHospitals = await res.json();
+                    document.getElementById('scheduleContainer').innerHTML = '';
+                    addScheduleRow();
+                }
+            } catch (err) {
+                console.error('Error fetching hospitals', err);
+            }
+        }
+        loadHospitalsForSignup();
+
+        roleSelect.addEventListener('change', () => {
+            const role = roleSelect.value;
+            patientFields.style.display = role === 'patient' ? 'block' : 'none';
+            doctorFields.style.display = role === 'doctor_user' ? 'block' : 'none';
+        });
+
+        function addScheduleRow() {
+            const container = document.getElementById('scheduleContainer');
+            const rowId = 'sched_' + Date.now();
+
+            let hospitalOptions = '<option value="">Select Hospital</option>';
+            availableHospitals.forEach(h => {
+                hospitalOptions += `<option value="${h.id}">${h.name}</option>`;
+            });
+
+            const rowHtml = `
+                <div id="${rowId}" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.75rem;">
+                    <select class="form-control schedule-hospital" style="flex:1; min-width:140px; margin-bottom:0;">
+                        ${hospitalOptions}
+                    </select>
+                    <select class="form-control schedule-day" style="width:120px; margin-bottom:0;">
+                        <option value="">Day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                    </select>
+                    <input type="time" class="form-control schedule-start" style="width:110px; margin-bottom:0;" title="Start Time">
+                    <span style="color:var(--text-muted)">to</span>
+                    <input type="time" class="form-control schedule-end" style="width:110px; margin-bottom:0;" title="End Time">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()" style="padding:0.4rem 0.6rem; border-radius:var(--radius-sm)">X</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', rowHtml);
+        }
+
+        // Initial row is now added dynamically after hospitals load
+
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('signupBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating account...';
+
+            try {
+                const role = roleSelect.value;
+                const body = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value,
+                    role
+                };
+
+                if (role === 'patient') {
+                    body.phone = document.getElementById('phone').value;
+                    body.address = document.getElementById('address').value;
+                } else if (role === 'doctor_user') {
+                    body.specialization = document.getElementById('specialization').value;
+                    body.phone = document.getElementById('doctorPhone').value;
+
+                    // Parse schedules
+                    const schedules = [];
+                    const scheduleRows = document.getElementById('scheduleContainer').children;
+                    for (let i = 0; i < scheduleRows.length; i++) {
+                        const row = scheduleRows[i];
+                        const hospital = row.querySelector('.schedule-hospital').value;
+                        const day = row.querySelector('.schedule-day').value;
+                        const start = row.querySelector('.schedule-start').value;
+                        const end = row.querySelector('.schedule-end').value;
+
+                        if (hospital && day && start && end) {
+                            schedules.push({
+                                hospital_id: parseInt(hospital),
+                                day_of_week: day,
+                                start_time: start,
+                                end_time: end
+                            });
+                        }
+                    }
+                    if (schedules.length === 0) {
+                        showToast('Please add at least one complete hospital schedule', 'error');
+                        btn.disabled = false;
+                        btn.textContent = 'Create Account';
+                        return;
+                    }
+                    body.schedules = schedules;
+                }
+
+                const res = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showToast(data.error || 'Signup failed', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Create Account';
+                    return;
+                }
+
+                setToken(data.token);
+                localStorage.setItem('medicare_user_name', data.name);
+                showToast('Account created!', 'success');
+                setTimeout(() => redirectByRole(data.role), 500);
+
+            } catch (err) {
+                showToast('Connection error. Please try again.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+
+</html>

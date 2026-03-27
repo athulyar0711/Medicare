@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MEDICARE - Admin Dashboard">
+    <title>MEDICARE – Admin Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div id="navbar"></div>
+
+    <div class="page-container">
+        <!-- Welcome -->
+        <div class="welcome-section">
+            <h1>Admin Panel <span>⚙️</span></h1>
+            <p style="color:var(--text-secondary)">Manage doctors, hospitals, and system statistics</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid-4" style="margin-bottom:2rem">
+            <div class="stat-card">
+                <div class="card-icon purple">🩺</div>
+                <div class="stat-info">
+                    <h3 id="totalDoctors">-</h3>
+                    <p>Total Doctors</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="card-icon blue">🏥</div>
+                <div class="stat-info">
+                    <h3 id="totalHospitals">-</h3>
+                    <p>Total Hospitals</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="card-icon green">👥</div>
+                <div class="stat-info">
+                    <h3 id="totalPatients">-</h3>
+                    <p>Total Patients</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="card-icon orange">📅</div>
+                <div class="stat-info">
+                    <h3 id="totalAppointments">-</h3>
+                    <p>Total Appointments</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Users Card -->
+        <div class="card" style="margin-bottom:2rem">
+            <div style="display:flex;align-items:center;gap:1rem">
+                <div class="card-icon green">🟢</div>
+                <div>
+                    <h3 style="font-size:1.5rem" id="activeToday">-</h3>
+                    <p style="color:var(--text-secondary);font-size:0.85rem">Active Users Today</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('doctors')">🩺 Doctors</button>
+            <button class="tab-btn" onclick="switchTab('addDoctor')">➕ Add Doctor</button>
+            <button class="tab-btn" onclick="switchTab('hospitals')">🏥 Hospitals</button>
+            <button class="tab-btn" onclick="switchTab('addHospital')">➕ Add Hospital</button>
+            <button class="tab-btn" onclick="switchTab('schedule')">📅 Schedule</button>
+        </div>
+
+        <!-- Doctors Tab -->
+        <div class="tab-content active" id="doctorsTab">
+            <div id="doctorsList">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- Add Doctor Tab -->
+        <div class="tab-content" id="addDoctorTab">
+            <div class="card" style="max-width:600px">
+                <div class="card-header">
+                    <h3>Add New Doctor</h3>
+                </div>
+                <form id="addDoctorForm">
+                    <div class="form-group">
+                        <label for="docName">Full Name *</label>
+                        <input type="text" id="docName" class="form-control" placeholder="Dr. John Smith" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="docEmail">Email</label>
+                            <input type="email" id="docEmail" class="form-control" placeholder="doctor@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="docPhone">Phone</label>
+                            <input type="tel" id="docPhone" class="form-control" placeholder="555-1234">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="docSpec">Specialization</label>
+                        <input type="text" id="docSpec" class="form-control" placeholder="e.g., Cardiology">
+                    </div>
+                    <div class="form-group">
+                        <label>Hospital Schedules</label>
+                        <div id="scheduleContainer" class="schedule-container"
+                            style="background:var(--bg-glass); border:1px solid var(--border-glass); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem;">
+                            <!-- Dynamic schedule rows will go here -->
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addScheduleRow()">+ Add Hospital
+                            Schedule</button>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Add Doctor</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Hospitals Tab -->
+        <div class="tab-content" id="hospitalsTab">
+            <div id="hospitalsList">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- Add Hospital Tab -->
+        <div class="tab-content" id="addHospitalTab">
+            <div class="card" style="max-width:600px">
+                <div class="card-header">
+                    <h3>Add New Hospital</h3>
+                </div>
+                <form id="addHospitalForm">
+                    <div class="form-group">
+                        <label for="hospName">Hospital Name *</label>
+                        <input type="text" id="hospName" class="form-control" placeholder="City General Hospital"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hospAddress">Address</label>
+                        <textarea id="hospAddress" class="form-control" placeholder="Full address" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="hospPhone">Phone</label>
+                        <input type="tel" id="hospPhone" class="form-control" placeholder="555-0100">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Add Hospital</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Schedule Tab -->
+        <div class="tab-content" id="scheduleTab">
+            <div class="card" style="max-width:600px">
+                <div class="card-header">
+                    <h3>Add Doctor Schedule</h3>
+                </div>
+                <form id="addScheduleForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="schedDoctor">Doctor</label>
+                            <select id="schedDoctor" class="form-control" required>
+                                <option value="">Select doctor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="schedHospital">Hospital</label>
+                            <select id="schedHospital" class="form-control" required>
+                                <option value="">Select hospital</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="schedDay">Day of Week</label>
+                        <select id="schedDay" class="form-control" required>
+                            <option value="">Select day</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                            <option value="Sunday">Sunday</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="schedStart">Start Time</label>
+                            <input type="time" id="schedStart" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="schedEnd">End Time</label>
+                            <input type="time" id="schedEnd" class="form-control" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Add Schedule</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        if (!requireAuth(['admin'])) throw new Error('Unauthorized');
+        document.getElementById('navbar').innerHTML = renderNavbar('dashboard');
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            const tabs = {
+                doctors: 0, addDoctor: 1, hospitals: 2, addHospital: 3, schedule: 4
+            };
+            document.querySelectorAll('.tab-btn')[tabs[tab]].classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+        }
+
+        // Load Stats
+        async function loadStats() {
+            try {
+                const stats = await apiFetch('/admin/stats');
+                document.getElementById('totalDoctors').textContent = stats.totalDoctors;
+                document.getElementById('totalHospitals').textContent = stats.totalHospitals;
+                document.getElementById('totalPatients').textContent = stats.totalPatients;
+                document.getElementById('totalAppointments').textContent = stats.totalAppointments;
+                document.getElementById('activeToday').textContent = stats.activeUsersToday;
+            } catch (err) { /* errors handled */ }
+        }
+
+        // Load Doctors
+        async function loadDoctors() {
+            try {
+                const doctors = await apiFetch('/admin/doctors');
+                const container = document.getElementById('doctorsList');
+
+                if (!doctors || doctors.length === 0) {
+                    container.innerHTML = '<p class="empty-state">No doctors registered</p>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Specialization</th>
+                                    <th>Phone</th>
+                                    <th>Hospitals</th>
+                                    <th>App User</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${doctors.map(d => `
+                                    <tr>
+                                        <td><strong>${d.name}</strong></td>
+                                        <td>${d.email || '-'}</td>
+                                        <td><span class="badge badge-info">${d.specialization || '-'}</span></td>
+                                        <td>${d.phone || '-'}</td>
+                                        <td>${d.hospitals || '-'}</td>
+                                        <td>${d.is_app_user ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                // Populate schedule dropdown
+                const schedDoctor = document.getElementById('schedDoctor');
+                schedDoctor.innerHTML = '<option value="">Select doctor</option>' +
+                    doctors.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+
+            } catch (err) {
+                document.getElementById('doctorsList').innerHTML = '<p class="empty-state">Failed to load</p>';
+            }
+        }
+
+        // Load Hospitals
+        let allHospitals = [];
+        async function loadHospitals() {
+            try {
+                const hospitals = await apiFetch('/admin/hospitals');
+                allHospitals = hospitals || [];
+                const container = document.getElementById('hospitalsList');
+
+                if (!hospitals || hospitals.length === 0) {
+                    container.innerHTML = '<p class="empty-state">No hospitals registered</p>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Address</th>
+                                    <th>Phone</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${hospitals.map(h => `
+                                    <tr>
+                                        <td><strong>${h.name}</strong></td>
+                                        <td>${h.address || '-'}</td>
+                                        <td>${h.phone || '-'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                // Populate schedule dropdown
+                const schedHospital = document.getElementById('schedHospital');
+                schedHospital.innerHTML = '<option value="">Select hospital</option>' +
+                    hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
+
+                // Initialize the add doctor form's schedule UI
+                document.getElementById('scheduleContainer').innerHTML = '';
+                addScheduleRow();
+
+            } catch (err) {
+                document.getElementById('hospitalsList').innerHTML = '<p class="empty-state">Failed to load</p>';
+            }
+        }
+
+        function addScheduleRow() {
+            const container = document.getElementById('scheduleContainer');
+            const rowId = 'admin_sched_' + Date.now();
+
+            let hospitalOptions = '<option value="">Select Hospital</option>';
+            allHospitals.forEach(h => {
+                hospitalOptions += `<option value="${h.id}">${h.name}</option>`;
+            });
+
+            const rowHtml = `
+                <div id="${rowId}" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.75rem;">
+                    <select class="form-control schedule-hospital" required style="flex:1; min-width:140px; margin-bottom:0;">
+                        ${hospitalOptions}
+                    </select>
+                    <select class="form-control schedule-day" required style="width:120px; margin-bottom:0;">
+                        <option value="">Day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                    </select>
+                    <input type="time" class="form-control schedule-start" required style="width:110px; margin-bottom:0;" title="Start Time">
+                    <span style="color:var(--text-muted)">to</span>
+                    <input type="time" class="form-control schedule-end" required style="width:110px; margin-bottom:0;" title="End Time">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()" style="padding:0.4rem 0.6rem; border-radius:var(--radius-sm)">X</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', rowHtml);
+        }
+
+        // Add Doctor
+        document.getElementById('addDoctorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Parse schedules
+            const schedules = [];
+            const scheduleRows = document.getElementById('scheduleContainer').children;
+            for (let i = 0; i < scheduleRows.length; i++) {
+                const row = scheduleRows[i];
+                const hospital = row.querySelector('.schedule-hospital').value;
+                const day = row.querySelector('.schedule-day').value;
+                const start = row.querySelector('.schedule-start').value;
+                const end = row.querySelector('.schedule-end').value;
+
+                if (hospital && day && start && end) {
+                    schedules.push({
+                        hospital_id: parseInt(hospital),
+                        day_of_week: day,
+                        start_time: start,
+                        end_time: end
+                    });
+                }
+            }
+            if (schedules.length === 0) {
+                showToast('Please add at least one complete hospital schedule', 'error');
+                return;
+            }
+
+            try {
+                await apiFetch('/admin/doctors', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: document.getElementById('docName').value,
+                        email: document.getElementById('docEmail').value,
+                        specialization: document.getElementById('docSpec').value,
+                        phone: document.getElementById('docPhone').value,
+                        schedules: schedules
+                    })
+                });
+                showToast('Doctor added successfully!', 'success');
+                document.getElementById('addDoctorForm').reset();
+                document.getElementById('scheduleContainer').innerHTML = '';
+                addScheduleRow(); // Reset with one empty row
+                loadDoctors();
+                loadStats();
+            } catch (err) { /* error shown */ }
+        });
+
+        // Add Hospital
+        document.getElementById('addHospitalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await apiFetch('/admin/hospitals', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: document.getElementById('hospName').value,
+                        address: document.getElementById('hospAddress').value,
+                        phone: document.getElementById('hospPhone').value
+                    })
+                });
+                showToast('Hospital added successfully!', 'success');
+                document.getElementById('addHospitalForm').reset();
+                loadHospitals();
+                loadStats();
+            } catch (err) { /* error shown */ }
+        });
+
+        // Add Schedule
+        document.getElementById('addScheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await apiFetch('/admin/schedule', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        doctor_id: parseInt(document.getElementById('schedDoctor').value),
+                        hospital_id: parseInt(document.getElementById('schedHospital').value),
+                        day_of_week: document.getElementById('schedDay').value,
+                        start_time: document.getElementById('schedStart').value,
+                        end_time: document.getElementById('schedEnd').value
+                    })
+                });
+                showToast('Schedule added successfully!', 'success');
+                document.getElementById('addScheduleForm').reset();
+            } catch (err) { /* error shown */ }
+        });
+
+        // Init
+        loadStats();
+        loadDoctors();
+        loadHospitals();
+    </script>
+</body>
+
+</html>

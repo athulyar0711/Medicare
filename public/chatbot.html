@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MEDICARE - AI Health Chatbot">
+    <title>MEDICARE – AI Health Chat</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,0,0" />
+    <style>
+        /* Specific Chatbot Page Styles */
+        .chatbot-page-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 80px);
+            /* Adjust based on navbar */
+            padding: 2rem;
+        }
+
+        .chatbot-container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 700px;
+            max-height: 80vh;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            background: rgba(10, 14, 26, 0.85);
+            padding: 15px 22px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .header-info {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chatbot-logo {
+            height: 35px;
+            width: 35px;
+            padding: 6px;
+            fill: var(--accent-primary);
+            flex-shrink: 0;
+            background: var(--bg-glass);
+            border-radius: 50%;
+            border: 1px solid var(--border-glass);
+        }
+
+        .logo-text {
+            color: var(--text-primary);
+            font-size: 1.31rem;
+            font-weight: 700;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 25px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-secondary) transparent;
+        }
+
+        .message {
+            display: flex;
+            gap: 11px;
+            align-items: flex-start;
+        }
+
+        .bot-message .bot-avatar {
+            height: 35px;
+            width: 35px;
+            padding: 6px;
+            fill: #fff;
+            align-self: flex-end;
+            margin-bottom: 2px;
+            flex-shrink: 0;
+            background: var(--accent-gradient);
+            border-radius: 50%;
+        }
+
+        .user-message {
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .message-text {
+            padding: 12px 16px;
+            max-width: 80%;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .bot-message.thinking .message-text {
+            padding: 2px 16px;
+        }
+
+        .bot-message .message-text {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border-radius: 13px 13px 13px 3px;
+            border: 1px solid var(--border-glass);
+        }
+
+        .user-message .message-text {
+            color: #fff;
+            background: var(--accent-gradient);
+            border-radius: 13px 13px 3px 13px;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        .thinking-indicator {
+            display: flex;
+            gap: 4px;
+            padding-block: 15px;
+        }
+
+        .user-message .attachment {
+            width: 200px;
+            margin-top: -7px;
+            border-radius: 13px 3px 13px 13px;
+            border: 1px solid var(--border-glass);
+        }
+
+        .dot {
+            height: 7px;
+            width: 7px;
+            opacity: 0.7;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            animation: dotPulse 1.8s ease-in-out infinite;
+        }
+
+        .dot:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes dotPulse {
+
+            0%,
+            44% {
+                transform: translateY(0);
+            }
+
+            28% {
+                opacity: 0.4;
+                transform: translateY(-4px);
+            }
+
+            44% {
+                opacity: 0.2;
+            }
+        }
+
+        .chat-footer {
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 15px 22px;
+            border-top: 1px solid var(--border-glass);
+        }
+
+        .chat-form {
+            display: flex;
+            align-items: center;
+            background: var(--bg-glass);
+            border-radius: 32px;
+            outline: 1px solid var(--border-glass);
+            transition: all 0.3s ease;
+        }
+
+        .chat-form:focus-within {
+            outline: 2px solid var(--accent-primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .message-input {
+            border: none;
+            outline: none;
+            height: 47px;
+            width: 100%;
+            resize: none;
+            font-size: 0.95rem;
+            padding: 14px 0 13px 18px;
+            border-radius: inherit;
+            background: transparent;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .message-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .chat-controls {
+            display: flex;
+            height: 47px;
+            gap: 3px;
+            align-items: center;
+            padding-right: 6px;
+        }
+
+        .chat-controls button {
+            height: 35px;
+            border: none;
+            width: 35px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            background: none;
+            border-radius: 50%;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s ease;
+            position: relative;
+        }
+
+        #send-message {
+            color: #fff;
+            display: none;
+            background: var(--accent-primary);
+            box-shadow: 0 2px 10px var(--accent-glow);
+        }
+
+        .message-input:valid~.chat-controls #send-message {
+            display: flex;
+        }
+
+        #send-message:hover {
+            background: var(--accent-secondary);
+            transform: translateY(-1px);
+        }
+
+        .chat-controls button:hover:not(#send-message) {
+            background: var(--bg-glass);
+            color: var(--accent-primary);
+        }
+
+        .file-upload-wrapper {
+            height: 35px;
+            width: 35px;
+            position: relative;
+        }
+
+        .file-upload-wrapper :where(img, button) {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .file-upload-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 1px solid var(--accent-primary);
+        }
+
+        #fileCancelBtn {
+            display: none;
+            color: var(--danger);
+            background: var(--bg-card);
+        }
+
+        .file-upload-wrapper img,
+        .file-upload-wrapper.file-uploaded #fileUploadBtn {
+            display: none;
+        }
+
+        #fileUploadBtn {
+            z-index: 5;
+        }
+
+        .file-upload-wrapper.file-uploaded img {
+            display: flex;
+        }
+
+        .file-upload-wrapper.file-uploaded:hover #fileCancelBtn {
+            display: flex;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header" style="text-align: center; margin-bottom: 1rem;">
+            <h1>🤖 AI Health Assistant</h1>
+            <p>Ask health-related questions or upload your medical reports for simplification</p>
+        </div>
+
+        <div class="chatbot-page-wrapper">
+            <div class="chatbot-container">
+                <!-- Chat Header -->
+                <div class="chat-header">
+                    <div class="header-info">
+                        <svg class="chatbot-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+                            <path
+                                d="M738.3 287.6H285.7c-59 0-106.8 47.8-106.8 106.8v303.1c0 59 47.8 106.8 106.8 106.8h81.5v111.1c0 .7.8 1.1 1.4.7l166.9-110.6 41.8-.8h117.4l43.6-.4c59 0 106.8-47.8 106.8-106.8V394.5c0-59-47.8-106.9-106.8-106.9zM351.7 448.2c0-29.5 23.9-53.5 53.5-53.5s53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5-53.5-23.9-53.5-53.5zm157.9 267.1c-67.8 0-123.8-47.5-132.3-109h264.6c-8.6 61.5-64.5 109-132.3 109zm110-213.7c-29.5 0-53.5-23.9-53.5-53.5s23.9-53.5 53.5-53.5 53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5zM867.2 644.5V453.1h26.5c19.4 0 35.1 15.7 35.1 35.1v121.1c0 19.4-15.7 35.1-35.1 35.1h-26.5zM95.2 609.4V488.2c0-19.4 15.7-35.1 35.1-35.1h26.5v191.3h-26.5c-19.4 0-35.1-15.7-35.1-35.1zM561.5 149.6c0 23.4-15.6 43.3-36.9 49.7v44.9h-30v-44.9c-21.4-6.5-36.9-26.3-36.9-49.7 0-28.6 23.3-51.9 51.9-51.9s51.9 23.3 51.9 51.9z">
+                            </path>
+                        </svg>
+                        <h2 class="logo-text">MEDICARE AI</h2>
+                    </div>
+                </div>
+
+                <!-- Chat Body -->
+                <div class="chat-body" id="chatBody">
+                    <div class="message bot-message">
+                        <svg class="bot-avatar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+                            <path
+                                d="M738.3 287.6H285.7c-59 0-106.8 47.8-106.8 106.8v303.1c0 59 47.8 106.8 106.8 106.8h81.5v111.1c0 .7.8 1.1 1.4.7l166.9-110.6 41.8-.8h117.4l43.6-.4c59 0 106.8-47.8 106.8-106.8V394.5c0-59-47.8-106.9-106.8-106.9zM351.7 448.2c0-29.5 23.9-53.5 53.5-53.5s53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5-53.5-23.9-53.5-53.5zm157.9 267.1c-67.8 0-123.8-47.5-132.3-109h264.6c-8.6 61.5-64.5 109-132.3 109zm110-213.7c-29.5 0-53.5-23.9-53.5-53.5s23.9-53.5 53.5-53.5 53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5zM867.2 644.5V453.1h26.5c19.4 0 35.1 15.7 35.1 35.1v121.1c0 19.4-15.7 35.1-35.1 35.1h-26.5zM95.2 609.4V488.2c0-19.4 15.7-35.1 35.1-35.1h26.5v191.3h-26.5c-19.4 0-35.1-15.7-35.1-35.1zM561.5 149.6c0 23.4-15.6 43.3-36.9 49.7v44.9h-30v-44.9c-21.4-6.5-36.9-26.3-36.9-49.7 0-28.6 23.3-51.9 51.9-51.9s51.9 23.3 51.9 51.9z">
+                            </path>
+                        </svg>
+                        <div class="message-text">
+                            👋 Hello! I'm your Medicare AI Health Assistant.<br><br>
+                            How can I help you today?
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Footer -->
+                <div class="chat-footer">
+                    <form action="#" class="chat-form" id="chatForm">
+                        <textarea placeholder="Type your message..." class="message-input" id="messageInput"
+                            required></textarea>
+                        <div class="chat-controls">
+                            <div class="file-upload-wrapper" id="fileUploadWrapper">
+                                <input type="file" accept="images/*" id="fileInput" hidden>
+                                <img src="#" id="filePreview">
+                                <button type="button" id="fileUploadBtn"
+                                    class="material-symbols-rounded">attach_file</button>
+                                <button type="button" id="fileCancelBtn" class="material-symbols-rounded">close</button>
+                            </div>
+                            <button type="submit" id="sendMessageBtn"
+                                class="material-symbols-rounded">arrow_upward</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        if (!requireAuth(['patient'])) throw new Error('Unauthorized');
+        document.getElementById('navbar').innerHTML = renderNavbar('chatbot');
+
+        const chatBody = document.getElementById("chatBody");
+        const messageInput = document.getElementById("messageInput");
+        const chatForm = document.getElementById("chatForm");
+        const fileInput = document.getElementById("fileInput");
+        const fileUploadWrapper = document.getElementById("fileUploadWrapper");
+        const fileCancelBtn = document.getElementById("fileCancelBtn");
+        const fileUploadBtn = document.getElementById("fileUploadBtn");
+
+        const userData = {
+            message: null,
+            file: { data: null, mime_type: null }
+        };
+
+        const createMessageElement = (content, ...classes) => {
+            const div = document.createElement("div");
+            div.classList.add("message", ...classes);
+            div.innerHTML = content;
+            return div;
+        };
+
+        const loadChatHistory = async () => {
+             try {
+                 const chatBody = document.getElementById("chatBody");
+                 const response = await apiFetch('/chat');
+                 if (response && response.messages && response.messages.length > 0) {
+                      chatBody.innerHTML = ''; // clear initial hello message
+                      response.messages.forEach(msg => {
+                           const content = `
+                               <div class="message-text">${msg.text}</div>
+                           `;
+                           const msgClass = msg.role === 'user' ? 'user-message' : 'bot-message';
+                           
+                           let fullContent = content;
+                           if (msg.role === 'model') {
+                                fullContent = `<svg class="bot-avatar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+                                    <path d="M738.3 287.6H285.7c-59 0-106.8 47.8-106.8 106.8v303.1c0 59 47.8 106.8 106.8 106.8h81.5v111.1c0 .7.8 1.1 1.4.7l166.9-110.6 41.8-.8h117.4l43.6-.4c59 0 106.8-47.8 106.8-106.8V394.5c0-59-47.8-106.9-106.8-106.9zM351.7 448.2c0-29.5 23.9-53.5 53.5-53.5s53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5-53.5-23.9-53.5-53.5zm157.9 267.1c-67.8 0-123.8-47.5-132.3-109h264.6c-8.6 61.5-64.5 109-132.3 109zm110-213.7c-29.5 0-53.5-23.9-53.5-53.5s23.9-53.5 53.5-53.5 53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5zM867.2 644.5V453.1h26.5c19.4 0 35.1 15.7 35.1 35.1v121.1c0 19.4-15.7 35.1-35.1 35.1h-26.5zM95.2 609.4V488.2c0-19.4 15.7-35.1 35.1-35.1h26.5v191.3h-26.5c-19.4 0-35.1-15.7-35.1-35.1zM561.5 149.6c0 23.4-15.6 43.3-36.9 49.7v44.9h-30v-44.9c-21.4-6.5-36.9-26.3-36.9-49.7 0-28.6 23.3-51.9 51.9-51.9s51.9 23.3 51.9 51.9z"></path>
+                                </svg>
+                                ${content}`;
+                           } else if (msg.role === 'user' && msg.file_id) {
+                                // For files, we'll fetch them lazily or just show a tag indicating an image was sent
+                                fullContent += `<img src="/api/files/${msg.file_id}" class="attachment" onerror="this.style.display='none'" />`;
+                           }
+
+                           const div = createMessageElement(fullContent, msgClass);
+                           // Format markdown
+                           if (msg.role === 'model') {
+                               div.querySelector(".message-text").innerHTML = msg.text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/^#+\s?/gm, "").replace(/\n/g, "<br>");
+                           }
+                           
+                           chatBody.appendChild(div);
+                      });
+                      chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+                 }
+             } catch (err) {
+                 console.error("Failed to load chat history", err);
+             }
+        };
+
+        const generateBotResponse = async (incomingMessageDiv) => {
+            const messageElement = incomingMessageDiv.querySelector(".message-text")
+            try {
+                let fileId = null;
+
+                // 1. Upload File (if present)
+                if (userData.file.data) {
+                    const uploadResp = await apiFetch('/files/upload', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            filename: `img_${Date.now()}`,
+                            mimeType: userData.file.mime_type,
+                            data: userData.file.data
+                        })
+                    });
+                    fileId = uploadResp.fileId;
+                }
+
+                // 2. Transmit message directly to backend chat router
+                const response = await apiFetch('/chat', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        text: userData.message,
+                        file_id: fileId
+                    })
+                });
+
+                if (response.error) throw new Error(response.error);
+
+                const apiResponseText = response.reply
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/^#+\s?/gm, "")
+                    .trim();
+                messageElement.innerHTML = apiResponseText.replace(/\n/g, "<br>");
+
+            } catch (error) {
+                console.log("Error:", error);
+                messageElement.innerText = "Sorry, I am having trouble connecting right now.";
+                messageElement.style.color = "#ff6b6b";
+            } finally {
+                userData.file = {};
+                incomingMessageDiv.classList.remove("thinking");
+                chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+            }
+        };
+
+        const handleOutgoingMessage = (e) => {
+            e.preventDefault();
+            userData.message = messageInput.value.trim();
+            messageInput.value = "";
+            fileUploadWrapper.classList.remove("file-uploaded");
+
+            if (!userData.message && !userData.file.data) return;
+
+            const messageContent = `
+                <div class="message-text"></div>
+                ${userData.file.data ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="attachment" />` : ""}
+            `;
+            const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
+            outgoingMessageDiv.querySelector(".message-text").textContent = userData.message;
+            if (!userData.message) {
+                outgoingMessageDiv.querySelector(".message-text").style.display = "none";
+            }
+
+            chatBody.appendChild(outgoingMessageDiv);
+            chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+
+            fileUploadWrapper.classList.remove("file-uploaded");
+            document.getElementById("filePreview").src = "#";
+            fileInput.value = "";
+
+            setTimeout(() => {
+                const messageContent = `<svg class="bot-avatar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+                    <path d="M738.3 287.6H285.7c-59 0-106.8 47.8-106.8 106.8v303.1c0 59 47.8 106.8 106.8 106.8h81.5v111.1c0 .7.8 1.1 1.4.7l166.9-110.6 41.8-.8h117.4l43.6-.4c59 0 106.8-47.8 106.8-106.8V394.5c0-59-47.8-106.9-106.8-106.9zM351.7 448.2c0-29.5 23.9-53.5 53.5-53.5s53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5-53.5-23.9-53.5-53.5zm157.9 267.1c-67.8 0-123.8-47.5-132.3-109h264.6c-8.6 61.5-64.5 109-132.3 109zm110-213.7c-29.5 0-53.5-23.9-53.5-53.5s23.9-53.5 53.5-53.5 53.5 23.9 53.5 53.5-23.9 53.5-53.5 53.5zM867.2 644.5V453.1h26.5c19.4 0 35.1 15.7 35.1 35.1v121.1c0 19.4-15.7 35.1-35.1 35.1h-26.5zM95.2 609.4V488.2c0-19.4 15.7-35.1 35.1-35.1h26.5v191.3h-26.5c-19.4 0-35.1-15.7-35.1-35.1zM561.5 149.6c0 23.4-15.6 43.3-36.9 49.7v44.9h-30v-44.9c-21.4-6.5-36.9-26.3-36.9-49.7 0-28.6 23.3-51.9 51.9-51.9s51.9 23.3 51.9 51.9z"></path>
+                </svg>
+                <div class="message-text">
+                    <div class="thinking-indicator">
+                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    </div>
+                </div>`;
+
+                const incomingMessageDiv = createMessageElement(messageContent, "bot-message", "thinking");
+                chatBody.appendChild(incomingMessageDiv);
+                chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+                generateBotResponse(incomingMessageDiv);
+            }, 600);
+        };
+
+        messageInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleOutgoingMessage(e);
+            }
+        });
+
+        fileInput.addEventListener("change", () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById("filePreview").src = e.target.result;
+                fileUploadWrapper.classList.add("file-uploaded");
+                userData.file = {
+                    data: e.target.result.split(",")[1],
+                    mime_type: file.type
+                };
+                fileInput.value = "";
+            }
+            reader.readAsDataURL(file);
+            messageInput.focus();
+        });
+
+        fileCancelBtn.addEventListener("click", () => {
+            userData.file = {};
+            fileInput.value = "";
+            document.getElementById("filePreview").src = "#";
+            fileUploadWrapper.classList.remove("file-uploaded");
+        });
+
+        chatForm.addEventListener("submit", handleOutgoingMessage);
+        fileUploadBtn.addEventListener("click", () => fileInput.click());
+
+        // Load chat history on initialization
+        loadChatHistory();
+    </script>
+</body>
+
+</html>

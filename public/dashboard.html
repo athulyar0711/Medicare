@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MEDICARE Patient Dashboard">
+    <title>MEDICARE – Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div id="navbar"></div>
+
+    <div class="page-container">
+        <!-- Welcome -->
+        <div class="welcome-section">
+            <h1>Welcome back, <span id="userName">Patient</span> 👋</h1>
+            <p class="page-header" style="margin-top:0.25rem">Here's your health overview</p>
+        </div>
+
+        <!-- BMI Section -->
+        <div class="bmi-section" id="bmiSection">
+            <div class="section-header">
+                <h2>🫀 Health Metrics</h2>
+            </div>
+            <div id="bmiContent">
+                <div class="bmi-form" id="bmiForm">
+                    <div class="form-group">
+                        <label for="height">Height (cm)</label>
+                        <input type="number" id="height" class="form-control" placeholder="e.g. 170" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="weight">Weight (kg)</label>
+                        <input type="number" id="weight" class="form-control" placeholder="e.g. 70" step="0.1">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveHealth()">Calculate BMI</button>
+                </div>
+                <div id="bmiResult" style="display:none; margin-top:1.5rem;">
+                    <div class="bmi-display">
+                        <div class="bmi-circle">
+                            <span class="bmi-value" id="bmiValue">--</span>
+                            <span class="bmi-label">BMI</span>
+                        </div>
+                        <div class="bmi-info">
+                            <div class="bmi-category" id="bmiCategory">--</div>
+                            <div class="bmi-details" id="bmiDetails">
+                                <p>Height: <strong id="dispHeight">--</strong> cm | Weight: <strong id="dispWeight">--</strong> kg</p>
+                                <p style="margin-top:0.5rem">Blood Sugar: <strong id="dispSugar">--</strong> mg/dL</p>
+                                <p>Vitamin D: <strong id="dispVitaminD">--</strong> ng/mL</p>
+                                <small style="color:var(--text-muted); font-size:0.8rem">(Extracted from chat reports)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services Grid -->
+        <div class="section">
+            <h2 style="margin-bottom:1rem">🩺 Services</h2>
+            <div class="grid-3">
+                <a href="/doctor_booking.html" class="service-card">
+                    <div class="service-icon card-icon green">📅</div>
+                    <h3>Find & Book Doctor</h3>
+                    <p>Search for preferred doctors and schedule appointments in our unified portal</p>
+                </a>
+                <a href="/reminders.html" class="service-card">
+                    <div class="service-icon card-icon orange">⏰</div>
+                    <h3>Reminders</h3>
+                    <p>Manage health reminders and appointment alerts</p>
+                </a>
+                <a href="/chatbot.html" class="service-card">
+                    <div class="service-icon card-icon blue">🤖</div>
+                    <h3>AI Health Chat</h3>
+                    <p>Ask health questions and get instant guidance</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Appointments -->
+        <div class="section">
+            <div class="section-header">
+                <h2>📋 Recent Appointments</h2>
+                <a href="/doctor_booking.html" class="btn btn-secondary btn-sm">Book New</a>
+            </div>
+            <div id="appointmentsList">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        if (!requireAuth(['patient'])) throw new Error('Unauthorized');
+
+        document.getElementById('navbar').innerHTML = renderNavbar('dashboard');
+        document.getElementById('userName').textContent = getUserName();
+
+        // Load BMI
+        async function loadHealth() {
+            try {
+                const data = await apiFetch('/patient/health');
+                
+                // Display extra metrics if they exist
+                if (data && data.blood_sugar) document.getElementById('dispSugar').textContent = data.blood_sugar;
+                if (data && data.vitamin_d) document.getElementById('dispVitaminD').textContent = data.vitamin_d;
+
+                if (data && data.bmi) {
+                    document.getElementById('height').value = data.height;
+                    document.getElementById('weight').value = data.weight;
+                    displayBMI(data.height, data.weight, data.bmi);
+                }
+            } catch (err) { /* No health data yet */ }
+        }
+
+        async function saveHealth() {
+            const height = parseFloat(document.getElementById('height').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+
+            if (!height || !weight || height <= 0 || weight <= 0) {
+                showToast('Please enter valid height and weight', 'error');
+                return;
+            }
+
+            // Immediately calculate and display on frontend
+            const bmi = (weight / Math.pow(height / 100, 2)).toFixed(1);
+            displayBMI(height, weight, bmi);
+
+            try {
+                // Background save to API
+                const data = await apiFetch('/patient/health', {
+                    method: 'POST',
+                    body: JSON.stringify({ height, weight })
+                });
+                if (data && data.bmi) {
+                    displayBMI(height, weight, data.bmi);
+                }
+                showToast('Health metrics saved!', 'success');
+            } catch (err) {
+                showToast('Calculated BMI (Server sync skipped)', 'info');
+            }
+        }
+
+        function displayBMI(height, weight, bmi) {
+            document.getElementById('bmiResult').style.display = 'block';
+            document.getElementById('bmiValue').textContent = parseFloat(bmi).toFixed(1);
+            document.getElementById('dispHeight').textContent = height;
+            document.getElementById('dispWeight').textContent = weight;
+
+            let category = '', color = '';
+            if (bmi < 18.5) { category = 'Underweight'; color = '#3b82f6'; }
+            else if (bmi < 25) { category = 'Normal Weight'; color = '#10b981'; }
+            else if (bmi < 30) { category = 'Overweight'; color = '#f59e0b'; }
+            else { category = 'Obese'; color = '#ef4444'; }
+
+            document.getElementById('bmiCategory').textContent = category;
+            document.getElementById('bmiCategory').style.color = color;
+            document.querySelector('.bmi-circle').style.borderColor = color;
+        }
+
+        // Load appointments
+        async function loadAppointments() {
+            try {
+                const appointments = await apiFetch('/patient/appointments');
+                const container = document.getElementById('appointmentsList');
+
+                if (!appointments || appointments.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <h3>No appointments yet</h3>
+                            <p>Book your first appointment with a doctor</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = appointments.slice(0, 5).map(appt => {
+                    const date = new Date(appt.appointment_datetime);
+                    const statusClass = appt.status === 'completed' ? 'success' : appt.status === 'cancelled' ? 'danger' : 'info';
+                    return `
+                        <div class="appointment-card" style="margin-bottom:0.75rem">
+                            <div class="appt-date">
+                                <div class="day">${date.getDate()}</div>
+                                <div class="month">${date.toLocaleString('en', { month: 'short' })}</div>
+                            </div>
+                            <div class="appt-info" style="flex:1">
+                                <h4>${appt.doctor_name}</h4>
+                                <p>${appt.specialization} • ${appt.hospital_name}</p>
+                                <p>${date.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
+                            <span class="badge badge-${statusClass}">${appt.status}</span>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                document.getElementById('appointmentsList').innerHTML = '<p class="empty-state">Failed to load appointments</p>';
+            }
+        }
+
+        loadHealth();
+        loadAppointments();
+    </script>
+</body>
+
+</html>

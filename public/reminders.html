@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MEDICARE - Reminders">
+    <title>MEDICARE – Reminders</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div id="navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>⏰ Reminders</h1>
+            <p>Manage your health reminders and appointment alerts</p>
+        </div>
+
+        <div class="grid-2">
+            <!-- Add Reminder -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>➕ Add Custom Reminder</h3>
+                </div>
+                <form id="reminderForm">
+                    <div class="form-group">
+                        <label for="reminderTitle">Reminder Name</label>
+                        <input type="text" id="reminderTitle" class="form-control" placeholder="e.g., Take medicine"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reminderDesc">Description (optional)</label>
+                        <textarea id="reminderDesc" class="form-control" placeholder="Additional details..."
+                            rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="reminderInterval">Interval (minutes)</label>
+                        <input type="number" id="reminderInterval" class="form-control"
+                            placeholder="e.g., 120 for 2 hours" required min="1">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Create Reminder</button>
+                </form>
+
+                <!-- Quick Presets -->
+                <div style="margin-top:1.25rem">
+                    <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.5rem;font-weight:600">Quick
+                        Presets</p>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                        <button class="btn btn-secondary btn-sm" onclick="quickReminder('💧 Drink Water', 120)">💧 Water
+                            (2h)</button>
+                        <button class="btn btn-secondary btn-sm" onclick="quickReminder('🧘 Stretch Break', 60)">🧘
+                            Stretch (1h)</button>
+                        <button class="btn btn-secondary btn-sm" onclick="quickReminder('💊 Take Medicine', 480)">💊
+                            Medicine (8h)</button>
+                        <button class="btn btn-secondary btn-sm" onclick="quickReminder('🩸 Blood Check', 259200)">🩸
+                            Blood Check
+                            (6mo)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Reminders -->
+            <div>
+                <div class="section-header">
+                    <h2>Active Reminders</h2>
+                    <span class="badge badge-info" id="reminderCount">0</span>
+                </div>
+                <div id="remindersList">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        if (!requireAuth(['patient'])) throw new Error('Unauthorized');
+        document.getElementById('navbar').innerHTML = renderNavbar('reminders');
+
+        async function loadReminders() {
+            try {
+                const reminders = await apiFetch('/patient/reminders');
+                const container = document.getElementById('remindersList');
+                document.getElementById('reminderCount').textContent = reminders.filter(r => r.is_active).length;
+
+                if (!reminders || reminders.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">⏰</div>
+                            <h3>No reminders</h3>
+                            <p>Create your first reminder or use a quick preset</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = reminders.map(r => {
+                    const interval = r.interval_minutes > 0
+                        ? (r.interval_minutes >= 60
+                            ? `Every ${(r.interval_minutes / 60).toFixed(0)}h`
+                            : `Every ${r.interval_minutes}m`)
+                        : 'One-time';
+                    const nextTrigger = r.next_trigger ? formatDateTime(r.next_trigger) : 'N/A';
+
+                    return `
+                        <div class="reminder-card ${r.is_active ? '' : 'inactive'}" style="margin-bottom:0.75rem">
+                            <div class="reminder-info">
+                                <h4>${r.title}</h4>
+                                <p>${r.description || interval}</p>
+                                <p style="font-size:0.75rem;margin-top:0.25rem">Next: ${nextTrigger}</p>
+                            </div>
+                            <div class="reminder-actions">
+                                <button class="btn btn-sm ${r.is_active ? 'btn-secondary' : 'btn-success'}"
+                                    onclick="toggleReminder(${r.id})">
+                                    ${r.is_active ? '⏸ Pause' : '▶ Resume'}
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteReminder(${r.id})">🗑</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                document.getElementById('remindersList').innerHTML = '<p class="empty-state">Failed to load reminders</p>';
+            }
+        }
+
+        document.getElementById('reminderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await apiFetch('/patient/reminders', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        title: document.getElementById('reminderTitle').value,
+                        description: document.getElementById('reminderDesc').value,
+                        interval_minutes: parseInt(document.getElementById('reminderInterval').value)
+                    })
+                });
+                showToast('Reminder created!', 'success');
+                document.getElementById('reminderForm').reset();
+                loadReminders();
+            } catch (err) { /* error shown by apiFetch */ }
+        });
+
+        async function quickReminder(title, interval) {
+            try {
+                await apiFetch('/patient/reminders', {
+                    method: 'POST',
+                    body: JSON.stringify({ title, description: '', interval_minutes: interval })
+                });
+                showToast(`${title} reminder created!`, 'success');
+                loadReminders();
+            } catch (err) { /* error shown by apiFetch */ }
+        }
+
+        async function toggleReminder(id) {
+            try {
+                await apiFetch(`/patient/reminders/${id}/toggle`, { method: 'PATCH' });
+                loadReminders();
+            } catch (err) { /* error shown */ }
+        }
+
+        async function deleteReminder(id) {
+            if (!confirm('Delete this reminder?')) return;
+            try {
+                await apiFetch(`/patient/reminders/${id}`, { method: 'DELETE' });
+                showToast('Reminder deleted', 'info');
+                loadReminders();
+            } catch (err) { /* error shown */ }
+        }
+
+        loadReminders();
+
+        // Auto-refresh the reminders list every minute to keep the "Next Trigger" time visually updated in real-time
+        setInterval(() => {
+            loadReminders();
+        }, 60000);
+    </script>
+</body>
+
+</html>
